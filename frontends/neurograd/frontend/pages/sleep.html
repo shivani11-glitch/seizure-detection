@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroGrad – Sleep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    .sleep-bar { height: 12px; border-radius: 6px; background: #f0ddd8; overflow: hidden; }
+    .sleep-fill { height: 100%; background: linear-gradient(90deg, #c8b4f0, #a78bfa); border-radius: 6px; transition: width 0.8s; }
+    .quality-btn { padding: 10px 20px; border-radius: 12px; border: 1.5px solid #f0ddd8; background: white; cursor: pointer; font-size: 13px; color: #7a6060; transition: all 0.2s; }
+    .quality-btn.active { background: #f4c2b0; border-color: #e8857a; color: #3d2c2c; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="home.html" class="nav-logo">
+      <div class="nav-logo-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0624a" stroke-width="2"><path d="M9.5 2a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5H7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h.5"/><path d="M14.5 2a4.5 4.5 0 0 0-4.5 4.5"/><path d="M14.5 22a4.5 4.5 0 0 1-4.5-4.5v0a4.5 4.5 0 0 1 4.5-4.5H17a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-.5"/><path d="M9.5 22a4.5 4.5 0 0 0 4.5-4.5"/></svg></div>
+      <div><h1>NeuroGrad</h1><p>Your wellness companion</p></div>
+    </a>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link"> Home</a>
+      <a href="analysis.html" class="nav-link"> Analysis</a>
+      <a href="diary.html" class="nav-link"> Diary</a>
+      <a href="sleep.html" class="nav-link active"> Sleep</a>
+      <a href="games.html" class="nav-link"> Games</a>
+      <a href="calm.html" class="nav-link"> Calm</a>
+    </div>
+    <div class="nav-actions"><button onclick="logout()" class="btn-logout">Sign Out</button></div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-stone-800"> Sleep Tracker</h2>
+      <p class="text-stone-500 mt-1">Track your sleep patterns for better wellness insights</p>
+    </div>
+
+    <div class="card p-6 mb-6">
+      <h3 class="font-semibold text-stone-700 mb-5">Log Last Night's Sleep</h3>
+      <div class="grid grid-cols-2 gap-4 mb-5">
+        <div>
+          <label class="text-sm font-medium text-stone-600 block mb-1.5">Bedtime</label>
+          <input type="time" id="bedtime" value="22:30" class="input-field"/>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-stone-600 block mb-1.5">Wake Time</label>
+          <input type="time" id="waketime" value="06:30" class="input-field"/>
+        </div>
+      </div>
+      <div class="mb-5">
+        <label class="text-sm font-medium text-stone-600 block mb-2">Sleep Quality</label>
+        <div class="flex gap-2 flex-wrap">
+          <button class="quality-btn" onclick="setQuality(this,'😴 Poor')">😴 Poor</button>
+          <button class="quality-btn" onclick="setQuality(this,'😐 Fair')">😐 Fair</button>
+          <button class="quality-btn active" onclick="setQuality(this,'😊 Good')">😊 Good</button>
+          <button class="quality-btn" onclick="setQuality(this,'🌟 Excellent')">🌟 Excellent</button>
+        </div>
+      </div>
+      <div class="mb-5">
+        <label class="text-sm font-medium text-stone-600 block mb-1.5">Notes (optional)</label>
+        <input type="text" id="sleepNotes" class="input-field" placeholder="Any dreams, disturbances..."/>
+      </div>
+      <button onclick="logSleep()" class="btn-primary">Log Sleep</button>
+    </div>
+
+    <!-- Weekly Overview -->
+    <div class="card p-6 mb-6">
+      <h3 class="font-semibold text-stone-700 mb-4">This Week</h3>
+      <div id="weeklyChart" class="space-y-3"></div>
+    </div>
+
+    <div id="sleepHistory" class="space-y-3"></div>
+  </main>
+
+  <nav class="mobile-nav">
+    <a href="home.html" class="mobile-nav-item"><span>Home</span></a>
+    <a href="analysis.html" class="mobile-nav-item"><span>Analysis</span></a>
+    <a href="diary.html" class="mobile-nav-item"><span>Diary</span></a>
+    <a href="sleep.html" class="mobile-nav-item active"><span>Sleep</span></a>
+    <a href="calm.html" class="mobile-nav-item"><span>Calm</span></a>
+  </nav>
+
+  <script src="../js/config.js"></script>
+  <script>
+    requireAuth();
+    let selectedQuality = '😊 Good';
+
+    function setQuality(el, q) {
+      document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      selectedQuality = q;
+    }
+
+    function calcHours(bed, wake) {
+      const [bh, bm] = bed.split(':').map(Number);
+      const [wh, wm] = wake.split(':').map(Number);
+      let mins = (wh * 60 + wm) - (bh * 60 + bm);
+      if (mins < 0) mins += 24 * 60;
+      return (mins / 60).toFixed(1);
+    }
+
+    function logSleep() {
+      const bed = document.getElementById('bedtime').value;
+      const wake = document.getElementById('waketime').value;
+      const hours = calcHours(bed, wake);
+      const logs = JSON.parse(localStorage.getItem('ng_sleep') || '[]');
+      logs.unshift({ bed, wake, hours: parseFloat(hours), quality: selectedQuality, notes: document.getElementById('sleepNotes').value, date: new Date().toISOString() });
+      localStorage.setItem('ng_sleep', JSON.stringify(logs));
+      document.getElementById('sleepNotes').value = '';
+      loadSleep();
+    }
+
+    function loadSleep() {
+      const logs = JSON.parse(localStorage.getItem('ng_sleep') || '[]');
+      // Weekly chart (last 7)
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const weekly = logs.slice(0, 7).reverse();
+      document.getElementById('weeklyChart').innerHTML = weekly.length === 0
+        ? '<p class="text-stone-400 text-sm">No data yet. Log your first sleep!</p>'
+        : weekly.map(l => `
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-stone-400 w-10">${new Date(l.date).toLocaleDateString('en-US',{weekday:'short'})}</span>
+            <div class="flex-1 sleep-bar"><div class="sleep-fill" style="width:${Math.min((l.hours/10)*100,100)}%"></div></div>
+            <span class="text-xs font-semibold text-stone-600 w-12">${l.hours}h</span>
+            <span class="text-xs">${l.quality.split(' ')[0]}</span>
+          </div>`).join('');
+
+      document.getElementById('sleepHistory').innerHTML = logs.slice(0,5).map((l,i) => `
+        <div class="card p-4 flex items-center justify-between">
+          <div>
+            <div class="font-semibold text-stone-700 text-sm">${l.hours} hours • ${l.quality}</div>
+            <div class="text-xs text-stone-400 mt-0.5">${l.bed} → ${l.wake} • ${new Date(l.date).toLocaleDateString()}</div>
+            ${l.notes ? `<div class="text-xs text-stone-500 mt-1">${l.notes}</div>` : ''}
+          </div>
+          <button onclick="deleteSleep(${i})" class="text-stone-300 hover:text-red-400">🗑</button>
+        </div>`).join('') || '<div class="card p-6 text-center text-stone-400 text-sm">No sleep logs yet.</div>';
+    }
+
+    function deleteSleep(i) {
+      const logs = JSON.parse(localStorage.getItem('ng_sleep') || '[]');
+      logs.splice(i, 1);
+      localStorage.setItem('ng_sleep', JSON.stringify(logs));
+      loadSleep();
+    }
+
+    loadSleep();
+  </script>
+</body>
+</html>

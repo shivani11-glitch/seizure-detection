@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroGrad – Analysis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    .upload-zone { border: 2.5px dashed #f4c2b0; border-radius: 20px; padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fffaf9; }
+    .upload-zone:hover, .upload-zone.dragover { border-color: #e8857a; background: #fff5f3; }
+    .report-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(200,140,130,0.08); margin-bottom: 10px; transition: all 0.2s; }
+    .report-row:hover { box-shadow: 0 6px 20px rgba(200,140,130,0.15); }
+    .status-badge { font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 500; }
+    .status-completed { background: #eefff4; color: #219653; }
+    .status-pending { background: #fffbeb; color: #b45309; }
+    .status-processing { background: #eff6ff; color: #1d4ed8; }
+    .status-failed { background: #fff0ee; color: #c0392b; }
+    .progress-bar { height: 4px; background: #f0ddd8; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #f4a090, #e8857a); border-radius: 4px; transition: width 0.5s; }
+    .seizure-alert { background: linear-gradient(135deg, #fff0ee, #ffe4e1); border: 2px solid #f4a090; border-radius: 16px; padding: 20px; }
+    .no-seizure-alert { background: linear-gradient(135deg, #eefff4, #dcfce7); border: 2px solid #6fcf97; border-radius: 16px; padding: 20px; }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="home.html" class="nav-logo">
+      <div class="nav-logo-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0624a" stroke-width="2"><path d="M9.5 2a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5H7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h.5"/><path d="M14.5 2a4.5 4.5 0 0 0-4.5 4.5"/><path d="M14.5 22a4.5 4.5 0 0 1-4.5-4.5v0a4.5 4.5 0 0 1 4.5-4.5H17a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-.5"/><path d="M9.5 22a4.5 4.5 0 0 0 4.5-4.5"/></svg></div>
+      <div><h1>NeuroGrad</h1><p>Your wellness companion</p></div>
+    </a>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link"> Home</a>
+      <a href="analysis.html" class="nav-link active">Analysis</a>
+      <a href="diary.html" class="nav-link">Diary</a>
+      <a href="sleep.html" class="nav-link"> Sleep</a>
+      <a href="games.html" class="nav-link"> Games</a>
+      <a href="calm.html" class="nav-link"> Calm</a>
+    </div>
+    <div class="nav-actions"><button onclick="logout()" class="btn-logout">Sign Out</button></div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-stone-800"> EEG Analysis</h2>
+      <p class="text-stone-500 mt-1">Upload your EEG recording (.edf) — our AI model will detect seizure activity</p>
+    </div>
+
+    <div class="card p-6 mb-8">
+      <h3 class="text-lg font-semibold text-stone-700 mb-4">Upload EEG File</h3>
+      <div id="alertBox" class="hidden alert mb-4"></div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+           ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <!-- <div class="text-5xl mb-3">🧠</div> -->
+        <p class="text-stone-600 font-semibold text-lg">Drop your EDF file here</p>
+        <p class="text-stone-400 text-sm mt-1">or click to browse</p>
+        <p class="text-stone-300 text-xs mt-3">Supports: .edf files up to 100MB</p>
+      </div>
+      <input type="file" id="fileInput" accept=".edf" class="hidden" onchange="handleFileSelect(event)"/>
+      <div id="filePreview" class="hidden mt-4 p-4 bg-rose-50 rounded-xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="text-2xl">📁</div>
+          <div>
+            <div class="font-medium text-stone-700 text-sm" id="fileName"></div>
+            <div class="text-xs text-stone-400" id="fileSize"></div>
+          </div>
+        </div>
+        <button onclick="clearFile()" class="text-stone-400 hover:text-rose-500 text-lg">✕</button>
+      </div>
+      <div id="uploadProgress" class="hidden mt-4">
+        <div class="flex justify-between text-sm text-stone-500 mb-1">
+          <span class="pulse">Uploading & Analysing with AI model...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+      <button id="uploadBtn" onclick="uploadFile()" class="btn-primary w-full mt-4 hidden">
+        🚀 Upload & Analyse with EEG Model
+      </button>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-stone-700">Your Reports</h3>
+        <button onclick="loadReports()" class="text-sm text-rose-400 hover:text-rose-600">↻ Refresh</button>
+      </div>
+      <div id="reportsList"><div class="card p-8 text-center text-stone-400 text-sm">Loading...</div></div>
+    </div>
+
+    <div id="resultModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-xl font-bold text-stone-800">EEG Analysis Result</h3>
+          <button onclick="closeModal()" class="text-stone-400 hover:text-stone-600 text-2xl leading-none">✕</button>
+        </div>
+        <div id="modalContent"></div>
+        <button onclick="closeModal()" class="btn-primary w-full mt-6">Close</button>
+      </div>
+    </div>
+  </main>
+
+  <nav class="mobile-nav">
+    <a href="home.html" class="mobile-nav-item"><span>Home</span></a>
+    <a href="analysis.html" class="mobile-nav-item active"><span>Analysis</span></a>
+    <a href="diary.html" class="mobile-nav-item"><span>Diary</span></a>
+    <a href="sleep.html" class="mobile-nav-item"><span>Sleep</span></a>
+    <a href="calm.html" class="mobile-nav-item"><span>Calm</span></a>
+  </nav>
+
+  <script src="../js/config.js"></script>
+  <script>
+    requireAuth();
+    let selectedFile = null;
+
+    function showAlert(msg, type='error') {
+      const box = document.getElementById('alertBox');
+      box.textContent = msg;
+      box.className = `alert ${type==='error'?'alert-error':'alert-success'}`;
+      box.classList.remove('hidden');
+      setTimeout(() => box.classList.add('hidden'), 6000);
+    }
+
+    function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('dragover'); }
+    function handleDragLeave() { document.getElementById('uploadZone').classList.remove('dragover'); }
+    function handleDrop(e) { e.preventDefault(); document.getElementById('uploadZone').classList.remove('dragover'); if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); }
+    function handleFileSelect(e) { if(e.target.files[0]) processFile(e.target.files[0]); }
+
+    function processFile(file) {
+      if (!file.name.endsWith('.edf')) { showAlert('Only .edf files are supported!'); return; }
+      selectedFile = file;
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = (file.size/1024/1024).toFixed(2) + ' MB';
+      document.getElementById('filePreview').classList.remove('hidden');
+      document.getElementById('uploadBtn').classList.remove('hidden');
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('filePreview').classList.add('hidden');
+      document.getElementById('uploadBtn').classList.add('hidden');
+    }
+
+    async function uploadFile() {
+      if (!selectedFile) return;
+      const btn = document.getElementById('uploadBtn');
+      btn.disabled = true; btn.textContent = 'Uploading...';
+      document.getElementById('uploadProgress').classList.remove('hidden');
+      const formData = new FormData();
+      formData.append('edfFile', selectedFile);
+      try {
+        let pct = 0;
+        const timer = setInterval(() => {
+          pct = Math.min(pct + 5, 90);
+          document.getElementById('progressFill').style.width = pct + '%';
+          document.getElementById('progressPct').textContent = pct + '%';
+        }, 300);
+        const res = await fetch('http://localhost:5000/api/reports/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` },
+          body: formData
+        });
+        const data = await res.json();
+        clearInterval(timer);
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('progressPct').textContent = '100%';
+        if (!res.ok) throw new Error(data.message);
+        showAlert('File uploaded! AI model is analysing... Click Refresh in a few seconds.', 'success');
+        clearFile();
+        setTimeout(() => { document.getElementById('uploadProgress').classList.add('hidden'); loadReports(); }, 2000);
+        const pollInterval = setInterval(async () => {
+          await loadReports();
+          const processing = document.querySelectorAll('.status-processing, .status-pending');
+          if (processing.length === 0) clearInterval(pollInterval);
+        }, 5000);
+      } catch (err) {
+        showAlert('Upload failed: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = ' Upload & Analyse with EEG Model';
+      }
+    }
+
+    async function loadReports() {
+      try {
+        const data = await apiFetch('/reports');
+        const container = document.getElementById('reportsList');
+        if (data.reports.length === 0) {
+          container.innerHTML = `<div class="card p-8 text-center text-stone-400 text-sm">No reports yet. Upload your first EEG file above.</div>`;
+          return;
+        }
+        container.innerHTML = data.reports.map(r => `
+          <div class="report-row">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${r.seizureDetected ? 'bg-red-50' : 'bg-green-50'}">
+                ${r.status==='completed' ? (r.seizureDetected ? '⚠️' : '✅') : '🧠'}
+              </div>
+              <div>
+                <div class="font-semibold text-stone-700 text-sm">${r.originalName}</div>
+                <div class="text-xs text-stone-400">${r.fileSize ? (r.fileSize/1024/1024).toFixed(2)+' MB · ' : ''}${new Date(r.createdAt).toLocaleString()}</div>
+                ${r.status==='completed' && r.totalWindows ? `<div class="text-xs mt-0.5 ${r.seizureDetected?'text-red-500':'text-green-600'} font-medium">${r.seizureDetected?'⚠️ Seizure Detected':'✅ No Seizure'} · ${r.seizurePercentage}% windows affected</div>` : ''}
+                ${r.status==='processing' ? `<div class="text-xs text-blue-400 pulse mt-0.5">🔄 AI model analysing...</div>` : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="status-badge status-${r.status}">${r.status}</span>
+              ${r.status==='completed' ? `<button onclick='viewResult(${JSON.stringify(r)})' class="text-xs text-rose-400 hover:text-rose-600 font-medium">View →</button>` : ''}
+              <button onclick="deleteReport('${r._id}')" class="text-stone-300 hover:text-red-400 text-lg">🗑</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('reportsList').innerHTML = `<div class="card p-6 text-center text-stone-400 text-sm">Failed to load reports.</div>`;
+      }
+    }
+
+    function viewResult(r) {
+      const isSeizure = r.seizureDetected;
+      document.getElementById('modalContent').innerHTML = `
+        <div class="${isSeizure ? 'seizure-alert' : 'no-seizure-alert'} mb-5">
+          <div class="text-4xl text-center mb-2">${isSeizure ? '⚠️' : '✅'}</div>
+          <div class="text-center font-bold text-lg ${isSeizure ? 'text-red-600' : 'text-green-700'}">
+            ${isSeizure ? 'Seizure Activity Detected' : 'No Seizure Detected'}
+          </div>
+        </div>
+        <div class="space-y-3 mb-4">
+          <div class="flex justify-between p-3 bg-stone-50 rounded-xl">
+            <span class="text-sm text-stone-500">File</span>
+            <span class="text-sm font-medium text-stone-700">${r.originalName}</span>
+          </div>
+          <div class="flex justify-between p-3 bg-stone-50 rounded-xl">
+            <span class="text-sm text-stone-500">Total Windows Analysed</span>
+            <span class="text-sm font-medium text-stone-700">${r.totalWindows}</span>
+          </div>
+          <div class="flex justify-between p-3 bg-stone-50 rounded-xl">
+            <span class="text-sm text-stone-500">Seizure Windows</span>
+            <span class="text-sm font-medium ${isSeizure?'text-red-500':'text-green-600'}">${r.seizureWindows} (${r.seizurePercentage}%)</span>
+          </div>
+          <div class="flex justify-between p-3 bg-stone-50 rounded-xl">
+            <span class="text-sm text-stone-500">Date</span>
+            <span class="text-sm font-medium text-stone-700">${new Date(r.createdAt).toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="p-4 bg-rose-50 rounded-xl">
+          <p class="text-sm text-stone-600 leading-relaxed">${r.result}</p>
+        </div>
+        ${isSeizure ? `<div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">⚕️ <strong>Important:</strong> This is an AI-assisted analysis. Please consult a qualified neurologist for medical diagnosis.</div>` : ''}
+      `;
+      document.getElementById('resultModal').classList.remove('hidden');
+    }
+
+    function closeModal() { document.getElementById('resultModal').classList.add('hidden'); }
+
+    async function deleteReport(id) {
+      if (!confirm('Delete this report?')) return;
+      try { await apiFetch(`/reports/${id}`, { method: 'DELETE' }); loadReports(); }
+      catch (err) { showAlert('Could not delete: ' + err.message); }
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>

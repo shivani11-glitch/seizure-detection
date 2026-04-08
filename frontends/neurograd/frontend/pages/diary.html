@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroGrad – Diary</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    .diary-entry { background: white; border-radius: 16px; padding: 20px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(200,140,130,0.08); border-left: 4px solid #f4c2b0; }
+    textarea { resize: vertical; min-height: 140px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="home.html" class="nav-logo">
+      <div class="nav-logo-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0624a" stroke-width="2"><path d="M9.5 2a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5H7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h.5"/><path d="M14.5 2a4.5 4.5 0 0 0-4.5 4.5"/><path d="M14.5 22a4.5 4.5 0 0 1-4.5-4.5v0a4.5 4.5 0 0 1 4.5-4.5H17a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-.5"/><path d="M9.5 22a4.5 4.5 0 0 0 4.5-4.5"/></svg></div>
+      <div><h1>NeuroGrad</h1><p>Your wellness companion</p></div>
+    </a>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link"> Home</a>
+      <a href="analysis.html" class="nav-link"> Analysis</a>
+      <a href="diary.html" class="nav-link active"> Diary</a>
+      <a href="sleep.html" class="nav-link"> Sleep</a>
+      <a href="games.html" class="nav-link"> Games</a>
+      <a href="calm.html" class="nav-link"> Calm</a>
+    </div>
+    <div class="nav-actions"><button onclick="logout()" class="btn-logout">Sign Out</button></div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-stone-800"> My Diary</h2>
+      <p class="text-stone-500 mt-1">Write your thoughts, feelings, and reflections</p>
+    </div>
+
+    <div class="card p-6 mb-8">
+      <h3 class="font-semibold text-stone-700 mb-4">New Entry – <span id="todayDate"></span></h3>
+      <textarea id="diaryText" class="input-field w-full mb-4" placeholder="How was your day? What are you feeling?..."></textarea>
+      <div class="flex gap-3 flex-wrap">
+        <span class="text-sm text-stone-500 self-center">Mood:</span>
+        <button class="mood-tag" onclick="setMoodTag(this,'😊 Happy')">😊 Happy</button>
+        <button class="mood-tag" onclick="setMoodTag(this,'😌 Calm')">😌 Calm</button>
+        <button class="mood-tag" onclick="setMoodTag(this,'😟 Anxious')">😟 Anxious</button>
+        <button class="mood-tag" onclick="setMoodTag(this,'😴 Tired')">😴 Tired</button>
+        <button class="mood-tag" onclick="setMoodTag(this,'😢 Sad')">😢 Sad</button>
+      </div>
+      <button onclick="saveEntry()" class="btn-primary mt-4">Save Entry</button>
+    </div>
+
+    <h3 class="text-lg font-semibold text-stone-700 mb-4">Previous Entries</h3>
+    <div id="entriesList"></div>
+  </main>
+
+  <nav class="mobile-nav">
+    <a href="home.html" class="mobile-nav-item"><span>Home</span></a>
+    <a href="analysis.html" class="mobile-nav-item"><span>Analysis</span></a>
+    <a href="diary.html" class="mobile-nav-item active"><span>Diary</span></a>
+    <a href="sleep.html" class="mobile-nav-item"><span>Sleep</span></a>
+    <a href="calm.html" class="mobile-nav-item"><span>Calm</span></a>
+  </nav>
+
+  <script src="../js/config.js"></script>
+  <script>
+    requireAuth();
+    let selectedMood = '';
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    const style = document.createElement('style');
+    style.textContent = `.mood-tag{padding:6px 14px;border-radius:20px;font-size:13px;border:1.5px solid #f0ddd8;background:white;cursor:pointer;transition:all 0.2s;color:#7a6060;} .mood-tag.active{background:#f4c2b0;border-color:#e8857a;color:#3d2c2c;font-weight:600;}`;
+    document.head.appendChild(style);
+
+    function setMoodTag(el, mood) {
+      document.querySelectorAll('.mood-tag').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      selectedMood = mood;
+    }
+
+    function saveEntry() {
+      const text = document.getElementById('diaryText').value.trim();
+      if (!text) return alert('Please write something first!');
+      const entries = JSON.parse(localStorage.getItem('ng_diary') || '[]');
+      entries.unshift({ text, mood: selectedMood, date: new Date().toISOString() });
+      localStorage.setItem('ng_diary', JSON.stringify(entries));
+      document.getElementById('diaryText').value = '';
+      selectedMood = '';
+      document.querySelectorAll('.mood-tag').forEach(t => t.classList.remove('active'));
+      loadEntries();
+    }
+
+    function loadEntries() {
+      const entries = JSON.parse(localStorage.getItem('ng_diary') || '[]');
+      const container = document.getElementById('entriesList');
+      if (entries.length === 0) {
+        container.innerHTML = `<div class="card p-8 text-center text-stone-400 text-sm">No entries yet. Start writing above!</div>`;
+        return;
+      }
+      container.innerHTML = entries.map((e, i) => `
+        <div class="diary-entry">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="text-xs text-stone-400">${new Date(e.date).toLocaleString()}</span>
+              ${e.mood ? `<span class="ml-2 text-xs bg-rose-50 px-2 py-0.5 rounded-full text-rose-400">${e.mood}</span>` : ''}
+            </div>
+            <button onclick="deleteEntry(${i})" class="text-stone-300 hover:text-red-400 text-sm">✕</button>
+          </div>
+          <p class="text-stone-600 text-sm leading-relaxed">${e.text}</p>
+        </div>
+      `).join('');
+    }
+
+    function deleteEntry(i) {
+      const entries = JSON.parse(localStorage.getItem('ng_diary') || '[]');
+      entries.splice(i, 1);
+      localStorage.setItem('ng_diary', JSON.stringify(entries));
+      loadEntries();
+    }
+
+    loadEntries();
+  </script>
+</body>
+</html>

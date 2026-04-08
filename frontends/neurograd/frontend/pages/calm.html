@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroGrad – Calm</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    .calm-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 2px 12px rgba(200,140,130,0.08); transition: all 0.2s; cursor: pointer; border: 2px solid transparent; }
+    .calm-card:hover { border-color: #f4c2b0; transform: translateY(-2px); }
+    .quote-box { background: linear-gradient(135deg, #fdddd5, #f9c4b8); border-radius: 20px; padding: 32px; text-align: center; }
+    .affirmation { animation: fadeIn 1s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="home.html" class="nav-logo">
+      <div class="nav-logo-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0624a" stroke-width="2"><path d="M9.5 2a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5H7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h.5"/><path d="M14.5 2a4.5 4.5 0 0 0-4.5 4.5"/><path d="M14.5 22a4.5 4.5 0 0 1-4.5-4.5v0a4.5 4.5 0 0 1 4.5-4.5H17a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-.5"/><path d="M9.5 22a4.5 4.5 0 0 0 4.5-4.5"/></svg></div>
+      <div><h1>NeuroGrad</h1><p>Your wellness companion</p></div>
+    </a>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link">Home</a>
+      <a href="analysis.html" class="nav-link"> Analysis</a>
+      <a href="diary.html" class="nav-link"> Diary</a>
+      <a href="sleep.html" class="nav-link"> Sleep</a>
+      <a href="games.html" class="nav-link"> Games</a>
+      <a href="calm.html" class="nav-link active"> Calm</a>
+    </div>
+    <div class="nav-actions"><button onclick="logout()" class="btn-logout">Sign Out</button></div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-stone-800"> Calm Space</h2>
+      <p class="text-stone-500 mt-1">Take a moment to breathe, reflect, and restore your balance</p>
+    </div>
+
+    <!-- Daily Affirmation -->
+    <div class="quote-box mb-8">
+      <div class="text-3xl mb-3">.</div>
+      <p class="text-stone-700 text-xl font-medium italic affirmation" id="affirmationText"></p>
+      <button onclick="newAffirmation()" class="mt-5 bg-white/60 hover:bg-white/80 px-5 py-2 rounded-xl text-sm text-stone-600 font-medium transition-all">New Affirmation ↻</button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <!-- Timer -->
+      <div class="calm-card text-center" onclick="startTimer(5)">
+        <div class="text-4xl mb-3">.</div>
+        <h3 class="font-bold text-stone-700">5-Min Meditation</h3>
+        <p class="text-stone-400 text-sm mt-1">Guided timer for a quick session</p>
+      </div>
+      <div class="calm-card text-center" onclick="startTimer(10)">
+        <div class="text-4xl mb-3">.</div>
+        <h3 class="font-bold text-stone-700">10-Min Mindfulness</h3>
+        <p class="text-stone-400 text-sm mt-1">Deep focus and body scan</p>
+      </div>
+      <div class="calm-card text-center" onclick="startTimer(15)">
+        <div class="text-4xl mb-3">.</div>
+        <h3 class="font-bold text-stone-700">15-Min Deep Rest</h3>
+        <p class="text-stone-400 text-sm mt-1">Full relaxation session</p>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div id="timerBox" class="card p-8 text-center hidden mb-8">
+      <div class="text-6xl font-bold text-rose-400 mb-3" id="timerDisplay">05:00</div>
+      <p id="timerLabel" class="text-stone-500 mb-6">Close your eyes and breathe slowly...</p>
+      <div class="flex gap-3 justify-center">
+        <button onclick="pauseTimer()" class="btn-primary px-8" id="pauseBtn">Pause</button>
+        <button onclick="stopTimer()" class="btn-logout px-8 py-3 rounded-xl">Stop</button>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <h3 class="font-semibold text-stone-700 mb-4">Wellness Tips</h3>
+    <div class="space-y-3" id="tipsList"></div>
+  </main>
+
+  <nav class="mobile-nav">
+    <a href="home.html" class="mobile-nav-item"><span>Home</span></a>
+    <a href="analysis.html" class="mobile-nav-item"><span>Analysis</span></a>
+    <a href="diary.html" class="mobile-nav-item"><span>Diary</span></a>
+    <a href="sleep.html" class="mobile-nav-item"><span>Sleep</span></a>
+    <a href="calm.html" class="mobile-nav-item active"><span>Calm</span></a>
+  </nav>
+
+  <script src="../js/config.js"></script>
+  <script>
+    requireAuth();
+
+    const affirmations = [
+      "You are capable of amazing things. Trust the process.",
+      "Every breath you take is a fresh start. Breathe in peace.",
+      "Your mind is your greatest asset. Nourish it with kindness.",
+      "Rest is productive. Healing is progress.",
+      "You don't have to be perfect — you just have to be you.",
+      "Small steps forward are still steps forward. Keep going.",
+      "Your feelings are valid. You are allowed to take up space.",
+      "Today, choose peace over perfection.",
+    ];
+
+    const tips = [
+      { icon: '💧', title: 'Stay Hydrated', desc: 'Drink 8 glasses of water daily — dehydration affects mood and focus.' },
+      { icon: '🚶', title: 'Move Your Body', desc: 'Even a 10-minute walk can reduce anxiety and boost your mood significantly.' },
+      { icon: '📵', title: 'Digital Detox', desc: 'Try 30 minutes screen-free before bed to improve sleep quality.' },
+      { icon: '🫂', title: 'Connect with Others', desc: 'Social connection is essential for mental wellness. Reach out to someone today.' },
+      { icon: '📔', title: 'Journal Your Thoughts', desc: 'Writing 3 things you\'re grateful for each day rewires your brain for positivity.' },
+    ];
+
+    function newAffirmation() {
+      const el = document.getElementById('affirmationText');
+      el.style.animation = 'none';
+      el.offsetHeight;
+      el.style.animation = 'fadeIn 0.8s ease-in';
+      el.textContent = `"${affirmations[Math.floor(Math.random() * affirmations.length)]}"`;
+    }
+    newAffirmation();
+
+    document.getElementById('tipsList').innerHTML = tips.map(t => `
+      <div class="card p-4 flex items-start gap-4">
+        <div class="text-3xl flex-shrink-0">${t.icon}</div>
+        <div>
+          <div class="font-semibold text-stone-700 text-sm">${t.title}</div>
+          <div class="text-stone-500 text-sm mt-0.5">${t.desc}</div>
+        </div>
+      </div>`).join('');
+
+    let timerInterval = null, timerSeconds = 0, paused = false;
+
+    function startTimer(minutes) {
+      if (timerInterval) clearInterval(timerInterval);
+      timerSeconds = minutes * 60;
+      paused = false;
+      document.getElementById('timerBox').classList.remove('hidden');
+      document.getElementById('timerBox').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('timerLabel').textContent = 'Close your eyes and breathe slowly...';
+      document.getElementById('pauseBtn').textContent = 'Pause';
+      updateDisplay();
+      timerInterval = setInterval(() => {
+        if (!paused) {
+          timerSeconds--;
+          updateDisplay();
+          if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById('timerLabel').textContent = '🎉 Session complete! Great job!';
+          }
+        }
+      }, 1000);
+    }
+
+    function updateDisplay() {
+      const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+      const s = (timerSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+    }
+
+    function pauseTimer() {
+      paused = !paused;
+      document.getElementById('pauseBtn').textContent = paused ? 'Resume' : 'Pause';
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval); timerInterval = null;
+      document.getElementById('timerBox').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroGrad – Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { font-family: 'DM Sans', sans-serif; }
+    body { background: #faf7f4; }
+    .tab-active { background: #f4c2b0; color: #3d2c2c; font-weight: 600; }
+    .tab-inactive { color: #9e8282; }
+    .btn-primary { background: linear-gradient(135deg, #f4a090, #e8857a); color: white; transition: all 0.2s; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(244,160,144,0.4); }
+    .input-field { border: 1.5px solid #f0ddd8; background: #fff; transition: border 0.2s; }
+    .input-field:focus { outline: none; border-color: #f4a090; box-shadow: 0 0 0 3px rgba(244,160,144,0.15); }
+    .card { background: white; box-shadow: 0 4px 30px rgba(200,140,130,0.12); }
+    .brain-icon { animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .error-msg { background: #fff0ee; border: 1px solid #f4a090; color: #c0392b; }
+    .success-msg { background: #eefff4; border: 1px solid #6fcf97; color: #219653; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center gap-3 mb-2">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-200 to-orange-200 flex items-center justify-center brain-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c0624a" stroke-width="2">
+            <path d="M9.5 2a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5H7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h.5"/>
+            <path d="M14.5 2a4.5 4.5 0 0 0-4.5 4.5"/>
+            <path d="M14.5 22a4.5 4.5 0 0 1-4.5-4.5v0a4.5 4.5 0 0 1 4.5-4.5H17a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-.5"/>
+            <path d="M9.5 22a4.5 4.5 0 0 0 4.5-4.5"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-stone-800">NeuroGrad</h1>
+          <p class="text-xs text-stone-400">Your wellness companion</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="card rounded-3xl p-8">
+      <!-- Tabs -->
+      <div class="flex bg-rose-50 rounded-2xl p-1 mb-6">
+        <button id="loginTab" onclick="switchTab('login')" class="flex-1 py-2.5 rounded-xl text-sm tab-active transition-all">Login</button>
+        <button id="registerTab" onclick="switchTab('register')" class="flex-1 py-2.5 rounded-xl text-sm tab-inactive transition-all">Register</button>
+      </div>
+
+      <!-- Alert -->
+      <div id="alertBox" class="hidden rounded-xl px-4 py-3 text-sm mb-4"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-stone-600 block mb-1.5">Email Address</label>
+            <input id="loginEmail" type="email" placeholder="you@example.com" required
+              class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-stone-600 block mb-1.5">Password</label>
+            <input id="loginPassword" type="password" placeholder="••••••••" required
+              class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm"/>
+          </div>
+          <button type="submit" class="btn-primary w-full py-3 rounded-xl font-semibold text-sm mt-2">
+            Sign In →
+          </button>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm font-medium text-stone-600 block mb-1.5">Full Name</label>
+              <input id="regName" type="text" placeholder="John Doe" required
+                class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm"/>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-stone-600 block mb-1.5">Age</label>
+              <input id="regAge" type="number" placeholder="25" min="1" max="120" required
+                class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm"/>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-stone-600 block mb-1.5">Email Address</label>
+            <input id="regEmail" type="email" placeholder="you@example.com" required
+              class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-stone-600 block mb-1.5">Phone Number</label>
+            <input id="regPhone" type="tel" placeholder="+91 98765 43210" required
+              class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-stone-600 block mb-1.5">Gender</label>
+            <select id="regGender" required
+              class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm">
+              <option value="">Select gender</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-stone-600 block mb-1.5">Password</label>
+            <input id="regPassword" type="password" placeholder="Min. 6 characters" minlength="6" required
+              class="input-field w-full px-4 py-3 rounded-xl text-stone-800 text-sm"/>
+          </div>
+          <button type="submit" class="btn-primary w-full py-3 rounded-xl font-semibold text-sm mt-2">
+            Create Account →
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <p class="text-center text-xs text-stone-400 mt-6">© 2024 NeuroGrad. All rights reserved.</p>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (getToken()) window.location.href = 'pages/home.html';
+
+    function switchTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const loginTab = document.getElementById('loginTab');
+      const registerTab = document.getElementById('registerTab');
+      document.getElementById('alertBox').classList.add('hidden');
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        loginTab.classList.add('tab-active'); loginTab.classList.remove('tab-inactive');
+        registerTab.classList.remove('tab-active'); registerTab.classList.add('tab-inactive');
+      } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        registerTab.classList.add('tab-active'); registerTab.classList.remove('tab-inactive');
+        loginTab.classList.remove('tab-active'); loginTab.classList.add('tab-inactive');
+      }
+    }
+
+    function showAlert(msg, type = 'error') {
+      const box = document.getElementById('alertBox');
+      box.textContent = msg;
+      box.className = `rounded-xl px-4 py-3 text-sm mb-4 ${type === 'error' ? 'error-msg' : 'success-msg'}`;
+      box.classList.remove('hidden');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.textContent = 'Signing in...'; btn.disabled = true;
+      try {
+        const data = await apiFetch('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value
+          })
+        });
+        saveAuth(data.token, data.user);
+        showAlert('Login successful! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'pages/home.html', 800);
+      } catch (err) {
+        showAlert(err.message);
+        btn.textContent = 'Sign In →'; btn.disabled = false;
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.textContent = 'Creating account...'; btn.disabled = true;
+      try {
+        const data = await apiFetch('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: document.getElementById('regName').value,
+            email: document.getElementById('regEmail').value,
+            password: document.getElementById('regPassword').value,
+            phone: document.getElementById('regPhone').value,
+            age: parseInt(document.getElementById('regAge').value),
+            gender: document.getElementById('regGender').value
+          })
+        });
+        saveAuth(data.token, data.user);
+        showAlert('Account created! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'pages/home.html', 800);
+      } catch (err) {
+        showAlert(err.message);
+        btn.textContent = 'Create Account →'; btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroGrad – Games</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    .game-card { background: white; border-radius: 20px; padding: 28px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 12px rgba(200,140,130,0.08); border: 2px solid transparent; }
+    .game-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(200,140,130,0.18); border-color: #f4c2b0; }
+    .memory-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; max-width: 320px; margin: 0 auto; }
+    .mem-card { height: 70px; background: linear-gradient(135deg, #f9ddd5, #f4c2b0); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; transition: all 0.3s; user-select: none; }
+    .mem-card.hidden-card { background: linear-gradient(135deg, #f4a090, #e8857a); }
+    .mem-card.hidden-card span { opacity: 0; }
+    .mem-card.matched { background: linear-gradient(135deg, #86efac, #4ade80); }
+    .breathe-circle { width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, #f9ddd5, #f4a090); display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 14px; font-weight: 600; color: white; transition: transform 4s ease-in-out; cursor: pointer; box-shadow: 0 0 40px rgba(244,160,144,0.4); }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="home.html" class="nav-logo">
+      <div class="nav-logo-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0624a" stroke-width="2"><path d="M9.5 2a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5H7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h.5"/><path d="M14.5 2a4.5 4.5 0 0 0-4.5 4.5"/><path d="M14.5 22a4.5 4.5 0 0 1-4.5-4.5v0a4.5 4.5 0 0 1 4.5-4.5H17a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-.5"/><path d="M9.5 22a4.5 4.5 0 0 0 4.5-4.5"/></svg></div>
+      <div><h1>NeuroGrad</h1><p>Your wellness companion</p></div>
+    </a>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link"> Home</a>
+      <a href="analysis.html" class="nav-link"> Analysis</a>
+      <a href="diary.html" class="nav-link"> Diary</a>
+      <a href="sleep.html" class="nav-link"> Sleep</a>
+      <a href="games.html" class="nav-link active"> Games</a>
+      <a href="calm.html" class="nav-link"> Calm</a>
+    </div>
+    <div class="nav-actions"><button onclick="logout()" class="btn-logout">Sign Out</button></div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-stone-800"> Brain Games</h2>
+      <p class="text-stone-500 mt-1">Fun exercises to keep your mind sharp and calm</p>
+    </div>
+
+    <div id="gameMenu" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      <div class="game-card" onclick="startGame('memory')">
+        <!-- <div class="text-4xl mb-3"></div> -->
+        <h3 class="font-bold text-stone-800 text-lg">Memory Match</h3>
+        <p class="text-stone-500 text-sm mt-1">Match pairs of emoji cards. Great for focus and memory!</p>
+        <div class="mt-4 text-xs text-rose-400 font-medium">Play Now →</div>
+      </div>
+      <div class="game-card" onclick="startGame('breathe')">
+        <!-- <div class="text-4xl mb-3">🫁</div> -->
+        <h3 class="font-bold text-stone-800 text-lg">Breathing Exercise</h3>
+        <p class="text-stone-500 text-sm mt-1">Box breathing to reduce anxiety and calm your mind.</p>
+        <div class="mt-4 text-xs text-rose-400 font-medium">Start →</div>
+      </div>
+    </div>
+
+    <!-- Memory Game -->
+    <div id="memoryGame" class="card p-6 hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-stone-700">Memory Match</h3>
+        <div class="flex gap-4 text-sm text-stone-500">
+          <span>Moves: <strong id="moveCount">0</strong></span>
+          <span>Pairs: <strong id="pairCount">0</strong>/8</span>
+          <button onclick="document.getElementById('memoryGame').classList.add('hidden');document.getElementById('gameMenu').classList.remove('hidden')" class="text-rose-400">✕ Exit</button>
+        </div>
+      </div>
+      <div class="memory-grid" id="memGrid"></div>
+      <button onclick="initMemory()" class="btn-primary mt-6 mx-auto block">New Game</button>
+    </div>
+
+    <!-- Breathing Exercise -->
+    <div id="breatheGame" class="card p-6 hidden text-center">
+      <div class="flex justify-end mb-2">
+        <button onclick="stopBreathe()" class="text-rose-400 text-sm">✕ Exit</button>
+      </div>
+      <h3 class="font-bold text-stone-700 mb-2">Box Breathing</h3>
+      <p class="text-stone-400 text-sm mb-8">Inhale 4s → Hold 4s → Exhale 4s → Hold 4s</p>
+      <div class="breathe-circle" id="breatheCircle" onclick="startBreathe()">Tap to Start</div>
+      <p id="breatheInstruction" class="text-stone-500 text-lg mt-6 font-medium"></p>
+      <p id="breatheCount" class="text-3xl font-bold text-rose-400 mt-2"></p>
+    </div>
+  </main>
+
+  <nav class="mobile-nav">
+    <a href="home.html" class="mobile-nav-item"><span>Home</span></a>
+    <a href="analysis.html" class="mobile-nav-item"><span>Analysis</span></a>
+    <a href="diary.html" class="mobile-nav-item"><span>Diary</span></a>
+    <a href="sleep.html" class="mobile-nav-item"><span>Sleep</span></a>
+    <a href="calm.html" class="mobile-nav-item"><span>Calm</span></a>
+  </nav>
+
+  <script src="../js/config.js"></script>
+  <script>
+    requireAuth();
+
+    function startGame(game) {
+      document.getElementById('gameMenu').classList.add('hidden');
+      if (game === 'memory') { document.getElementById('memoryGame').classList.remove('hidden'); initMemory(); }
+      if (game === 'breathe') { document.getElementById('breatheGame').classList.remove('hidden'); }
+    }
+
+    // Memory Game
+    const emojis = ['🧠','💫','🌸','🎯','🦋','🌊','🎨','🌺'];
+    let cards = [], flipped = [], matched = 0, moves = 0, lock = false;
+
+    function initMemory() {
+      const deck = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+      cards = deck; flipped = []; matched = 0; moves = 0;
+      document.getElementById('moveCount').textContent = 0;
+      document.getElementById('pairCount').textContent = 0;
+      document.getElementById('memGrid').innerHTML = deck.map((e, i) => `
+        <div class="mem-card hidden-card" id="mc${i}" onclick="flipCard(${i})"><span>${e}</span></div>`).join('');
+    }
+
+    function flipCard(i) {
+      if (lock || flipped.includes(i) || document.getElementById(`mc${i}`).classList.contains('matched')) return;
+      const el = document.getElementById(`mc${i}`);
+      el.classList.remove('hidden-card');
+      flipped.push(i);
+      if (flipped.length === 2) {
+        moves++;
+        document.getElementById('moveCount').textContent = moves;
+        lock = true;
+        const [a, b] = flipped;
+        if (cards[a] === cards[b]) {
+          document.getElementById(`mc${a}`).classList.add('matched');
+          document.getElementById(`mc${b}`).classList.add('matched');
+          matched++;
+          document.getElementById('pairCount').textContent = matched;
+          flipped = []; lock = false;
+          if (matched === 8) setTimeout(() => alert(`🎉 You won in ${moves} moves!`), 200);
+        } else {
+          setTimeout(() => {
+            document.getElementById(`mc${a}`).classList.add('hidden-card');
+            document.getElementById(`mc${b}`).classList.add('hidden-card');
+            flipped = []; lock = false;
+          }, 900);
+        }
+      }
+    }
+
+    // Breathing
+    let breatheInterval = null, breathePhase = 0, breatheCounter = 0;
+    const phases = [['Inhale', 4], ['Hold', 4], ['Exhale', 4], ['Hold', 4]];
+
+    function startBreathe() {
+      if (breatheInterval) return;
+      breathePhase = 0; breatheCounter = 0;
+      runPhase();
+    }
+
+    function runPhase() {
+      const [name, duration] = phases[breathePhase];
+      document.getElementById('breatheInstruction').textContent = name;
+      const circle = document.getElementById('breatheCircle');
+      circle.textContent = name;
+      if (name === 'Inhale') circle.style.transform = 'scale(1.4)';
+      else if (name === 'Exhale') circle.style.transform = 'scale(1)';
+
+      let count = duration;
+      document.getElementById('breatheCount').textContent = count;
+      breatheInterval = setInterval(() => {
+        count--;
+        document.getElementById('breatheCount').textContent = count;
+        if (count <= 0) {
+          clearInterval(breatheInterval); breatheInterval = null;
+          breathePhase = (breathePhase + 1) % 4;
+          runPhase();
+        }
+      }, 1000);
+    }
+
+    function stopBreathe() {
+      if (breatheInterval) clearInterval(breatheInterval); breatheInterval = null;
+      document.getElementById('breatheGame').classList.add('hidden');
+      document.getElementById('gameMenu').classList.remove('hidden');
+      document.getElementById('breatheCircle').style.transform = 'scale(1)';
+      document.getElementById('breatheInstruction').textContent = '';
+      document.getElementById('breatheCount').textContent = '';
+    }
+  </script>
+</body>
+</html>
